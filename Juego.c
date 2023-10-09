@@ -34,7 +34,7 @@ int main() {
     int numPlayers, choise, steps, result, c;
     bool valid = false;
     while (valid == false){
-        // Pedir al usuario el número de jugadores y si desea usar números random o fijos
+        // Pedimos al usuario el número de jugadores y si desea usar números random o fijos
         printf("Ingrese el número de jugadores (hasta %d): \n", NUM_PLAYERS_MAX);
         result = scanf("%d", &numPlayers);
 
@@ -81,7 +81,7 @@ int main() {
         }
     }
     
-    srand(time(NULL)); // Inicializar la semilla para números aleatorios
+    srand(time(NULL)); // Inicializamos la semilla para números aleatorios
     
     int board[BOARD_SIZE] = {0};
     int positions[NUM_PLAYERS_MAX] = {0};
@@ -95,13 +95,13 @@ int main() {
                 positions[i] += steps;
             }
             
-            // Verificar si el jugador llegó al final del tablero
+            // Verificamos si el jugador ha llegado al final del tablero
             if (positions[i] >= BOARD_SIZE) {
                 printf("Jugador %d ha llegado al final del tablero.\n", i + 1);
                 positions[i] = -1; // Marcar al jugador como terminado
             }
             
-            // Verificar colisiones
+            // Verificamos colisiones
             for (int j = 0; j < numPlayers; j++) {
                 if (i != j && positions[i] == positions[j]) {
                     int exponent = choise ? (rand() % 6) : steps;
@@ -124,11 +124,11 @@ int main() {
                 }
             }
             
-            // Imprimir el tablero
+            // Imprimimos el tablero
             printBoard(positions, numPlayers);
         }
         
-        // Verificar si todos los jugadores han llegado al final del tablero
+        // Verificamos si todos los jugadores han llegado al final del tablero
         int finishedPlayers = 0;
         for (int i = 0; i < numPlayers; i++) {
             if (positions[i] == -1) {
