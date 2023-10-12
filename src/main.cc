@@ -4,6 +4,8 @@
 #include <math.h>
 #include <stdbool.h>
 
+#include "dummy.h"
+
 #define NUM_PLAYERS_MAX 20
 #define BOARD_SIZE_FILA 50
 #define BOARD_SIZE_COLUMNA 10
