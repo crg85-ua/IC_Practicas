@@ -43,7 +43,7 @@ void printBoard(int positions[], int numPlayers)
     printf("|\n");
 }
 
-int temp_main()
+void temp_main()
 {
     int numPlayers, steps, exponent;
     bool valid = false;
