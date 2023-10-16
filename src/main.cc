@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <Jugador.h>
 
+#include <iostream>
+#include <exception>
+
 #define NUM_PLAYERS_MAX 20
 #define BOARD_SIZE_FILA 50
 #define BOARD_SIZE_COLUMNA 10
@@ -40,7 +43,7 @@ void printBoard(int positions[], int numPlayers)
     printf("|\n");
 }
 
-int main()
+int temp_main()
 {
     int numPlayers, steps, exponent;
     bool valid = false;
@@ -64,7 +67,6 @@ int main()
         for (int i = 0; i < numPlayers; i++)
         {
             int posAnterior = positions[i];
-            int posAnterior = positions[i];
             // Movemos jugador
             if (steps == 0)
             {
@@ -82,9 +84,9 @@ int main()
                 positions[i] = -1; // Marcamos al jugador como que ha terminado
             }
 
-            while (board[]){
+            // while (board[]){
 
-            }
+            // }
 
             // Verificamos colisiones
             for (int j = 0; j < numPlayers; j++)
@@ -140,6 +142,43 @@ int main()
             break;
         }
     }
+}
 
-    return 0;
+int main(int argc, char **argv)
+{
+    try
+    {
+        if (argc != 4)
+        {
+            throw std::invalid_argument("Usage: " + std::string(argv[0]) + " <num_players> <steps> <exponent>");
+        }
+
+        int numPlayer = std::atoi(argv[1]);
+        int steps = std::atoi(argv[2]);
+        int exponent = std::atoi(argv[3]);
+
+        if (numPlayer < 1 || numPlayer > NUM_PLAYERS_MAX)
+        {
+            throw std::invalid_argument("Number of players must be between 1 and 20");
+        }
+
+        if (steps > 5 )
+        {
+            throw std::invalid_argument("Number of steps must be between 1 and 5");
+        }
+
+        temp_main();
+
+        return EXIT_SUCCESS;
+    }
+    catch (const std::invalid_argument &e)
+    {
+        std::cerr << "Invalid argument: " << e.what() << std::endl;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return EXIT_FAILURE;
 }
