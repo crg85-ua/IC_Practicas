@@ -31,99 +31,13 @@ void printBoard(int positions[], int numPlayers) {
     printf("|\n");
 }
 
-int pedirNumero(){
-    int numPlayers,result,c;
-    bool valid = false;
-    while (valid == false){
-        // Pedir al usuario el número de jugadores y si desea usar números random o fijos
-        printf("Ingrese el número de jugadores (hasta %d): \n", NUM_PLAYERS_MAX);
-        result = scanf("%d", &numPlayers);
-
-        if (result != 1){
-            printf("Debe de introducir un número, inténtelo de nuevo\n");
-            while ((c = getchar()) != '\n' && c != EOF) {}
-        } else if (numPlayers < 2 || numPlayers > NUM_PLAYERS_MAX) {
-            printf("Número de jugadores no válido. Debe ser entre 2 y %d, inténtelo de nuevo.\n", NUM_PLAYERS_MAX);
-        } else{
-            valid = true;
-        }
-    }
-    return numPlayers;
-}
-
-int pedirAvanzar(){
-    int choise, steps,c,result;
-    bool valid = false;
-    while (valid == false){
-        printf("¿Desea usar números aleatorios para avanzar? (1 para Sí, 0 para No): \n");
-        result = scanf("%d", &choise);
-        if (result != 1){
-            printf("Debe de introducir un número, inténtelo de nuevo\n");
-           while ((c = getchar()) != '\n' && c != EOF) {}
-       } else if(choise == 0){
-            while (valid == false){
-                printf("Elija un número del 1 al 5\n");
-                result = scanf("%d", &steps);
-                if (result != 1){
-                printf("Debe de introducir un número, inténtelo de nuevo\n");
-                while ((c = getchar()) != '\n' && c != EOF) {}
-                } else if (steps < 1 || steps > 5){
-                    printf("Nuḿero erróneo, seleccione otro número\n");
-                } else{
-                    valid = true;
-                }
-            }
-        } else if (choise == 1){
-            valid = true;
-            steps = 0;
-        } else {
-            printf("Opción no válida. Debe ser 0 o 1, inténtelo de nuevo\n");
-        }
-    }
-    return steps;
-}
-
-int pedirExponente(){
-    int choise, exponent,c,result;
-    bool valid = false;
-    while (valid == false){
-        printf("¿Desea usar números aleatorios para el exponente? (1 para Sí, 0 para No): \n");
-        result = scanf("%d", &choise);
-        printf("aaa");
-        if (result != 1){
-            printf("Debe de introducir un número, inténtelo de nuevo\n");
-            while ((c = getchar()) != '\n' && c != EOF) {}
-        } else if(choise == 0){
-            while (valid == false){
-                printf("Elija un número para el exponent\n");
-                result = scanf("%d", &exponent);
-
-                if (result != 1){
-                    printf("Debe de introducir un número, inténtelo de nuevo\n");
-                    while ((c = getchar()) != '\n' && c != EOF) {}
-                } else if (exponent < 0){
-                    printf("Nuḿero erróneo, tiene que ser mayor que 0\n");
-                } else{
-                    valid = true;
-                }
-            }
-        } else if (choise == 1){
-            valid = true;
-            exponent = 0;
-        } else {
-            printf("Opción no válida. Debe ser 0 o 1, inténtelo de nuevo\n");
-        }
-    }
-    return exponent;
-}
-
 int main() {
     int numPlayers, steps ,exponent;
     bool valid = false;
     bool validAux = false;
-    numPlayers = pedirNumero();
-    steps = pedirAvanzar();
-    exponent = pedirExponente();
+    //numPlayers = 
+    //steps = 
+    //exponent = 
     
 
     srand(time(NULL)); // Inicializamos la semilla para números aleatorios
