@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <chrono>
 #include <stdbool.h>
 #include <Jugador.h>
 
@@ -15,6 +16,11 @@
 int getRandomStep()
 {
     return rand() % 6;
+}
+
+int getRandomExponent()
+{
+    return rand() % 50;
 }
 
 void printBoard(int positions[], int numPlayers)
@@ -43,102 +49,190 @@ void printBoard(int positions[], int numPlayers)
     printf("|\n");
 }
 
-void temp_main()
-{
-    int numPlayers, steps, exponent;
-    bool valid = false;
-    bool validAux = false;
-    // numPlayers =
-    // steps =
-    // exponent =
+int resuelveColision(int jugador1,int jugador2,int exponent){
+    int perdedor;
+    auto start1 = std::chrono::high_resolution_clock::now(); // Momento de inicio
+    int valor1 = (int)pow(3, exponent);
+    auto stop1 = std::chrono::high_resolution_clock::now(); // Momento de finalización
+    auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1); //cambiar a miliseconds si no llega a durar 1 segundo
+    
+    auto start2 = std::chrono::high_resolution_clock::now();
+    int valor2 = (int)pow(3, exponent);
+    auto stop2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
 
-    srand(time(NULL)); // Inicializamos la semilla para números aleatorios
+    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador1, duration1.count(), exponentAux);
+    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador2, duration2.count(), exponentAux);
 
-    int positions[NUM_PLAYERS_MAX] = {(0, 0)};
-    int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA] = {0};
-    for (int i = 0; i < numPlayers; i + 2)
+    if(valor1 != valor2)
+        printf("Algún jugador ha dado un valor erróneo.\n");
+
+    if (duration1 < duration2)
     {
-        board[0][i] = i;
-        board[BOARD_SIZE_FILA - 1][i] = i + 1;
+        printf("Jugador %d ha sido eliminado.\n", jugador2);
+        perdedor = jugador2;
+    }
+    else if (duration2 < duration1)
+    {
+        printf("Jugador %d ha sido eliminado.\n", jugador1);
+        perdedor = jugador1;
+    }
+    else
+    {
+        printf("Han empatado, por lo cual se eleminará uno aleatoriamente.\n");
+        if (rand() % 2)
+        {
+            printf("Jugador %d ha sido eliminado.\n", jugador1);
+            perdedor = jugador1;
+        }
+        else
+        {
+            printf("Jugador %d ha sido eliminado.\n", jugador2);
+            perdedor = jugador2;
+        }
+    }
+    return perdedor;
+}
+
+void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool meta){
+    int tope;
+    if (meta)
+        tope = BOARD_SIZE_FILA - posY - 1;
+    else
+        tope = steps;
+    for (int j = 0; j < tope; j++)
+    {
+        if (bajar)
+        {
+            if (board[posX][posY + j] != 0)
+            {
+                int perdedor;
+                colision == true;
+                printf("¡Colisión entre Jugador %d y Jugador %d!\n", i + 1, board[posX][posY + j]);
+                perdedor = resuelveColision(i+1,board[posX][posY + j], exponent);
+                vector[perdedor].setEstado(-1);
+            }
+        } else {
+            if (board[posX][posY - j] != 0)
+            {
+                colision == true;
+                printf("¡Colisión entre Jugador %d y Jugador %d!\n", i + 1, board[posX][posY - j]);
+                perdedor = resuelveColision(i+1,board[posX][posY + j], exponent);
+                vector[perdedor].setEstado(-1);
+            }
+        }
+    }
+}
+
+void temp_main(int numPlayers, int steps, int exponent)
+{
+    srand(time(NULL)); // Inicializamos la semilla para números aleatorios
+    int mitad;
+    bool impar = false;
+    Jugador vector[NUM_PLAYERS_MAX];
+    int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA] = {0};
+    if (numPlayers % 2 == 0)
+    {
+        mitad = numPlayers / 2;
+    }
+    else
+    {
+        mitad = numPlayers / 2 + 1;
+        impar = true;
+    }
+    int cont = 0;
+    for (int i = 0; i <= BOARD_SIZE_FILA; i += BOARD_SIZE_FILA)
+    {
+        for (int j = 0; j < mitad; j++)
+        {
+            if (i != 0 && !impar && j != mitad - 1)
+            {
+                board[i][j] = cont;
+                vector[cont] = Jugador(cont, i, j, 0);
+                cont++;
+            }
+        }
+    }
+
+    // Sacamos los pasos a mover
+    if (steps == 0)
+    {
+        steps = getRandomStep();
+    }
+
+    // Sacamos el exponente
+    if (exponent == 0)
+    {
+        exponent = getRandomExponent();
     }
 
     while (1)
     {
         for (int i = 0; i < numPlayers; i++)
         {
-            int posAnterior = positions[i];
-            // Movemos jugador
-            if (steps == 0)
-            {
-                positions[i] += getRandomStep();
-            }
-            else
-            {
-                positions[i] += steps;
-            }
+            if (vector[i].getEstado() == 0){
+                int posX, posY;
+                bool bajar = false;
+                bool colision = false;
+                bool meta = false;
+                
+                posX = vector[i].getX();
+                posY = vector[i].getY();
+                if (i <= mitad)
+                    bajar = true;
 
-            // Verificamos si el jugador llegó al final del tablero
-            if (positions[i] >= BOARD_SIZE_FILA)
-            {
-                printf("Jugador %d ha llegado al final del tablero.\n", i + 1);
-                positions[i] = -1; // Marcamos al jugador como que ha terminado
-            }
-
-            // while (board[]){
-
-            // }
-
-            // Verificamos colisiones
-            for (int j = 0; j < numPlayers; j++)
-            {
-                if (i != j && positions[i] == positions[j])
+                // Verificamos si al mover al jugador saldríamos del tablero
+                if (posY + steps >= (BOARD_SIZE_FILA - 1))
                 {
-                    int exponentAux;
-                    if (exponent == 0)
+                    meta = true;
+                    moverJugador(posX, posY, exponent, steps, bajar, meta);
+                    if (vector[i].getEstado() == 0)
                     {
-                        steps = rand() % 6;
-                    }
-                    int time1 = (int)pow(3, exponentAux);
-                    int time2 = (int)pow(3, exponentAux);
-
-                    printf("¡Colisión entre Jugador %d y Jugador %d!\n", i + 1, j + 1);
-                    printf("Jugador %d tarda %d segundos en resolver 3^%d.\n", i + 1, time1, exponentAux);
-                    printf("Jugador %d tarda %d segundos en resolver 3^%d.\n", j + 1, time2, exponentAux);
-
-                    if (time1 < time2)
-                    {
-                        printf("Jugador %d ha sido eliminado.\n", j + 1);
-                        positions[j] = -1; // Marcamos al jugador como eliminado
-                    }
-                    else if (time2 < time1)
-                    {
-                        printf("Jugador %d ha sido eliminado.\n", i + 1);
-                        positions[i] = -1; // Marcamos al jugador como eliminado
-                    }
-                    else
-                    {
-                        printf("Empate. Ambos jugadores continúan.\n");
+                        vector[i].setY(BOARD_SIZE_FILA - 1);
+                        vector[i].setEstado(1);
                     }
                 }
-            }
+                else
+                {
+                    moverJugador(posX, posY, exponent, steps, bajar, meta);
+                    if (vector[i].getEstado() == 0)
+                        vector[i].setY(posY + steps);
+                }
 
-            // Imprimir el tablero
-            printBoard(positions, numPlayers);
+                // Verificamos colisiones
+                for (int j = 0; j < numPlayers; j++)
+                {
+                    if (i != j && positions[i] == positions[j])
+                    {
+                        int exponentAux;
+                        if (exponent == 0)
+                        {
+                            steps = rand() % 6;
+                        }
+                        
+                    }
+                }
+                // Imprimir el tablero
+                printBoard(positions, numPlayers);
+            }
         }
 
         // Verificar si todos los jugadores han llegado al final del tablero
         int finishedPlayers = 0;
+        int livePlayers = 0;
         for (int i = 0; i < numPlayers; i++)
         {
-            if (positions[i] == -1)
+            if (vector[i].getEstado() == -1)
             {
                 finishedPlayers++;
+            } else if (vector[i].getEstado() == 0)
+            {
+                livePlayers++;
             }
         }
-
-        if (finishedPlayers == numPlayers)
+        if (livePlayers == 0)
         {
-            printf("¡Todos los jugadores han llegado al final del tablero! Juego terminado.\n");
+            printf("¡Los jugadores han llegado al final del tablero! Juego terminado.\n");
             break;
         }
     }
@@ -153,21 +247,24 @@ int main(int argc, char **argv)
             throw std::invalid_argument("Usage: " + std::string(argv[0]) + " <num_players> <steps> <exponent>");
         }
 
-        int numPlayer = std::atoi(argv[1]);
+        int numPlayers = std::atoi(argv[1]);
         int steps = std::atoi(argv[2]);
         int exponent = std::atoi(argv[3]);
 
-        if (numPlayer < 1 || numPlayer > NUM_PLAYERS_MAX)
+        if (numPlayers < 1 || numPlayers > NUM_PLAYERS_MAX)
         {
             throw std::invalid_argument("Number of players must be between 1 and 20");
         }
 
-        if (steps > 5 )
+        if (steps > 5)
         {
             throw std::invalid_argument("Number of steps must be between 1 and 5");
         }
-
-        temp_main();
+        auto start = std::chrono::high_resolution_clock::now();
+        temp_main(numPlayers, steps, exponent);
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+        printf("El programa ha tardado %lld milisegundos terminar.\n", duration.count());
 
         return EXIT_SUCCESS;
     }

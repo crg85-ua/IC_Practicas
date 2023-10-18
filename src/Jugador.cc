@@ -2,16 +2,18 @@
 
 #include <cmath>
 
-Jugador::Jugador(int num, int coordX, int coordY)
+Jugador::Jugador(int num, int coordX, int coordY, int estado)
 {
     this->num = num;
     this->coordX = coordX;
     this->coordY = coordY;
+    this->estado = estado;
 }
 
-Jugador::Jugador(int num)
+Jugador::Jugador(int num, int estado)
 {
     this->num = num;
+    this->estado = estado;
 }
 
 int Jugador::getNum() const
@@ -57,4 +59,14 @@ int Jugador::calcularExp(int exponent)
         resultado = (int)pow(3, exponent);
     }
     return resultado;
+}
+
+int Jugador::getEstado() const
+{
+    return this->estado;
+}
+
+void Jugador::setEstado(int num)
+{
+    this->estado = estado;
 }

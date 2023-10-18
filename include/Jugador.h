@@ -7,10 +7,11 @@ private:
     int num;
     int coordX;
     int coordY;
+    int estado
 
 public:
-    Jugador(int num, int coordX, int coordY);
-    Jugador(int num);
+    Jugador(int num, int coordX, int coordY,int estado);
+    Jugador(int num,int estado);
     int getNum() const;
     int getX() const;
     int getY() const;
@@ -19,6 +20,8 @@ public:
     void setY(int coordY);
     void moveJugador(int pasos);
     int calcularExp(int exponente);
+    int getEstado() const;
+    void setEstado(int estado);
 };
 
 #endif
