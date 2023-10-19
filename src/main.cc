@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <exception>
+#include <vector>
 
 #define NUM_PLAYERS_MAX 20
 #define BOARD_SIZE_FILA 50
@@ -49,13 +50,14 @@ void printBoard(int positions[], int numPlayers)
     printf("|\n");
 }
 
-int resuelveColision(int jugador1,int jugador2,int exponent){
+int resuelveColision(int jugador1, int jugador2, int exponent)
+{
     int perdedor;
     auto start1 = std::chrono::high_resolution_clock::now(); // Momento de inicio
     int valor1 = (int)pow(3, exponent);
-    auto stop1 = std::chrono::high_resolution_clock::now(); // Momento de finalización
-    auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1); //cambiar a miliseconds si no llega a durar 1 segundo
-    
+    auto stop1 = std::chrono::high_resolution_clock::now();                                 // Momento de finalización
+    auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1); // cambiar a miliseconds si no llega a durar 1 segundo
+
     auto start2 = std::chrono::high_resolution_clock::now();
     int valor2 = (int)pow(3, exponent);
     auto stop2 = std::chrono::high_resolution_clock::now();
@@ -64,7 +66,7 @@ int resuelveColision(int jugador1,int jugador2,int exponent){
     printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador1, duration1.count(), exponent);
     printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador2, duration2.count(), exponent);
 
-    if(valor1 != valor2)
+    if (valor1 != valor2)
         printf("Algún jugador ha dado un valor erróneo.\n");
 
     if (duration1 < duration2)
@@ -94,7 +96,8 @@ int resuelveColision(int jugador1,int jugador2,int exponent){
     return perdedor;
 }
 
-void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool meta, int* board, int i, Jugador* vector){
+void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool meta, int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA], int i, std::vector<Jugador *> vector)
+{
     int tope;
     bool colision = false;
     if (meta)
@@ -110,17 +113,19 @@ void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool 
                 int perdedor;
                 colision == true;
                 printf("¡Colisión entre Jugador %d y Jugador %d!\n", i + 1, board[posX][posY + j]);
-                perdedor = resuelveColision(i+1,board[posX][posY + j], exponent);
-                vector[perdedor].setEstado(-1);
+                perdedor = resuelveColision(i + 1, board[posX][posY + j], exponent);
+                vector[perdedor]->setEstado(-1);
             }
-        } else {
+        }
+        else
+        {
             if (board[posX][posY - j] != 0)
             {
                 int perdedor;
                 colision == true;
                 printf("¡Colisión entre Jugador %d y Jugador %d!\n", i + 1, board[posX][posY - j]);
-                perdedor = resuelveColision(i+1,board[posX][posY + j], exponent);
-                vector[perdedor].setEstado(-1);
+                perdedor = resuelveColision(i + 1, board[posX][posY + j], exponent);
+                vector[perdedor]->setEstado(-1);
             }
         }
     }
@@ -131,7 +136,9 @@ void temp_main(int numPlayers, int steps, int exponent)
     srand(time(NULL)); // Inicializamos la semilla para números aleatorios
     int mitad;
     bool impar = false;
-    Jugador vector[NUM_PLAYERS_MAX];
+
+    std::vector<Jugador *> vector;
+
     int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA] = {0};
     if (numPlayers % 2 == 0)
     {
@@ -150,7 +157,7 @@ void temp_main(int numPlayers, int steps, int exponent)
             if (i != 0 && !impar && j != mitad - 1)
             {
                 board[i][j] = cont;
-                vector[cont] = Jugador(cont, i, j, 0);
+                vector.push_back(new Jugador(cont, i, j, 0));
                 cont++;
             }
         }
@@ -172,14 +179,15 @@ void temp_main(int numPlayers, int steps, int exponent)
     {
         for (int i = 0; i < numPlayers; i++)
         {
-            if (vector[i].getEstado() == 0){
+            if (vector[i]->getEstado() == 0)
+            {
                 int posX, posY;
                 bool bajar = false;
                 bool colision = false;
                 bool meta = false;
-                
-                posX = vector[i].getX();
-                posY = vector[i].getY();
+
+                posX = vector[i]->getX();
+                posY = vector[i]->getY();
                 if (i <= mitad)
                     bajar = true;
 
@@ -187,22 +195,22 @@ void temp_main(int numPlayers, int steps, int exponent)
                 if (posY + steps >= (BOARD_SIZE_FILA - 1))
                 {
                     meta = true;
-                    moverJugador(posX, posY, exponent, steps, bajar, meta, &board, i, &vector);
-                    if (vector[i].getEstado() == 0)
+                    moverJugador(posX, posY, exponent, steps, bajar, meta, board, i, vector);
+                    if (vector[i]->getEstado() == 0)
                     {
-                        vector[i].setY(BOARD_SIZE_FILA - 1);
-                        vector[i].setEstado(1);
+                        vector[i]->setY(BOARD_SIZE_FILA - 1);
+                        vector[i]->setEstado(1);
                     }
                 }
                 else
                 {
-                    moverJugador(posX, posY, exponent, steps, bajar, meta, &board, i, &vector);
-                    if (vector[i].getEstado() == 0)
-                        vector[i].setY(posY + steps);
+                    moverJugador(posX, posY, exponent, steps, bajar, meta, board, i, vector);
+                    if (vector[i]->getEstado() == 0)
+                        vector[i]->setY(posY + steps);
                 }
 
                 // Imprimir el tablero
-                //printBoard(positions, numPlayers);
+                // printBoard(positions, numPlayers);
             }
         }
 
@@ -211,10 +219,11 @@ void temp_main(int numPlayers, int steps, int exponent)
         int livePlayers = 0;
         for (int i = 0; i < numPlayers; i++)
         {
-            if (vector[i].getEstado() == -1)
+            if (vector[i]->getEstado() == -1)
             {
                 finishedPlayers++;
-            } else if (vector[i].getEstado() == 0)
+            }
+            else if (vector[i]->getEstado() == 0)
             {
                 livePlayers++;
             }
@@ -225,6 +234,15 @@ void temp_main(int numPlayers, int steps, int exponent)
             break;
         }
     }
+
+    // Free vector of players memory
+    for (auto jugador : vector)
+    {
+        delete jugador;
+        jugador = nullptr;
+    }
+
+    vector.clear();
 }
 
 int main(int argc, char **argv)
