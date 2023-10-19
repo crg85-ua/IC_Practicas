@@ -61,8 +61,8 @@ int resuelveColision(int jugador1,int jugador2,int exponent){
     auto stop2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
 
-    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador1, duration1.count(), exponentAux);
-    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador2, duration2.count(), exponentAux);
+    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador1, duration1.count(), exponent);
+    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador2, duration2.count(), exponent);
 
     if(valor1 != valor2)
         printf("Algún jugador ha dado un valor erróneo.\n");
@@ -94,8 +94,9 @@ int resuelveColision(int jugador1,int jugador2,int exponent){
     return perdedor;
 }
 
-void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool meta){
+void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool meta, int* board, int i, Jugador* vector){
     int tope;
+    bool colision = false;
     if (meta)
         tope = BOARD_SIZE_FILA - posY - 1;
     else
@@ -115,6 +116,7 @@ void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool 
         } else {
             if (board[posX][posY - j] != 0)
             {
+                int perdedor;
                 colision == true;
                 printf("¡Colisión entre Jugador %d y Jugador %d!\n", i + 1, board[posX][posY - j]);
                 perdedor = resuelveColision(i+1,board[posX][posY + j], exponent);
@@ -185,7 +187,7 @@ void temp_main(int numPlayers, int steps, int exponent)
                 if (posY + steps >= (BOARD_SIZE_FILA - 1))
                 {
                     meta = true;
-                    moverJugador(posX, posY, exponent, steps, bajar, meta);
+                    moverJugador(posX, posY, exponent, steps, bajar, meta, &board, i, &vector);
                     if (vector[i].getEstado() == 0)
                     {
                         vector[i].setY(BOARD_SIZE_FILA - 1);
@@ -194,26 +196,13 @@ void temp_main(int numPlayers, int steps, int exponent)
                 }
                 else
                 {
-                    moverJugador(posX, posY, exponent, steps, bajar, meta);
+                    moverJugador(posX, posY, exponent, steps, bajar, meta, &board, i, &vector);
                     if (vector[i].getEstado() == 0)
                         vector[i].setY(posY + steps);
                 }
 
-                // Verificamos colisiones
-                for (int j = 0; j < numPlayers; j++)
-                {
-                    if (i != j && positions[i] == positions[j])
-                    {
-                        int exponentAux;
-                        if (exponent == 0)
-                        {
-                            steps = rand() % 6;
-                        }
-                        
-                    }
-                }
                 // Imprimir el tablero
-                printBoard(positions, numPlayers);
+                //printBoard(positions, numPlayers);
             }
         }
 

@@ -7,9 +7,10 @@ private:
     int num;
     int coordX;
     int coordY;
-    int estado
+    int estado;
 
 public:
+    Jugador();
     Jugador(int num, int coordX, int coordY,int estado);
     Jugador(int num,int estado);
     int getNum() const;

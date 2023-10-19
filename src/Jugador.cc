@@ -2,6 +2,14 @@
 
 #include <cmath>
 
+Jugador::Jugador()
+{
+    this->num = 0;
+    this->coordX = 0;
+    this->coordY = 0;
+    this->estado = 0;
+}
+
 Jugador::Jugador(int num, int coordX, int coordY, int estado)
 {
     this->num = num;
