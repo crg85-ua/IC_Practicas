@@ -56,7 +56,7 @@ void Jugador::setY(int coordY)
 
 void Jugador::moveJugador(int pasos)
 {
-    this->coordY += pasos;
+    this->coordX += pasos;
 }
 
 int Jugador::calcularExp(int exponent)
@@ -74,7 +74,7 @@ int Jugador::getEstado() const
     return this->estado;
 }
 
-void Jugador::setEstado(int num)
+void Jugador::setEstado(int estado)
 {
     this->estado = estado;
 }

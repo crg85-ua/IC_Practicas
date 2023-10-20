@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 #include <math.h>
 #include <chrono>
@@ -13,6 +11,7 @@
 #define NUM_PLAYERS_MAX 20
 #define BOARD_SIZE_FILA 50
 #define BOARD_SIZE_COLUMNA 10
+#define NUM_COLU_PRINT 4
 
 int getRandomStep()
 {
@@ -21,51 +20,49 @@ int getRandomStep()
 
 int getRandomExponent()
 {
-    return rand() % 50;
+    return rand() % 80;
 }
 
-void printBoard(int positions[], int numPlayers)
+void printBoard(int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA])
 {
     printf("Tablero:\n");
     for (int i = 0; i < BOARD_SIZE_FILA; i++)
     {
-        int playerIndex = -1;
-        for (int j = 0; j < numPlayers; j++)
+        printf("|");
+        for (int j = 0; j < NUM_COLU_PRINT; j++)
         {
-            if (positions[j] == i)
+            if (board[i][j] == -1)
             {
-                playerIndex = j;
-                break;
+                printf(" |");
+            }
+            else
+            {
+                printf("%d|", board[i][j]);
             }
         }
-        if (playerIndex == -1)
-        {
-            printf("| ");
-        }
-        else
-        {
-            printf("|%d", playerIndex + 1);
-        }
+        printf("\n");
     }
-    printf("|\n");
 }
 
 int resuelveColision(int jugador1, int jugador2, int exponent)
 {
     int perdedor;
+    long double valor1;
+    long double valor2;
     auto start1 = std::chrono::high_resolution_clock::now(); // Momento de inicio
-    int valor1 = (int)pow(3, exponent);
+    for (int i = 0; i < 1000000; i++)
+        valor1 = pow(3.0, exponent);
     auto stop1 = std::chrono::high_resolution_clock::now();                                 // Momento de finalización
     auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1); // cambiar a miliseconds si no llega a durar 1 segundo
 
     auto start2 = std::chrono::high_resolution_clock::now();
-    int valor2 = (int)pow(3, exponent);
+    for (int i = 0; i < 1000000; i++)
+        valor2 = pow(3.0, exponent);
     auto stop2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
 
-    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador1, duration1.count(), exponent);
-    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d.\n", jugador2, duration2.count(), exponent);
-
+    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d un millón de veces.\n", jugador1, duration1.count(), exponent);
+    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d un millón de veces.\n", jugador2, duration2.count(), exponent);
     if (valor1 != valor2)
         printf("Algún jugador ha dado un valor erróneo.\n");
 
@@ -96,38 +93,88 @@ int resuelveColision(int jugador1, int jugador2, int exponent)
     return perdedor;
 }
 
-void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool meta, int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA], int i, std::vector<Jugador *> vector)
+void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool meta, int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA], int numJugador, std::vector<Jugador *> vector)
 {
     int tope;
     bool colision = false;
-    if (meta)
-        tope = BOARD_SIZE_FILA - posY - 1;
+    bool mover = false;
+
+    // Colocamos el punto final hacia donde el jugador se moverá
+    if (meta && bajar)
+        tope = BOARD_SIZE_FILA - posX - 1;
+    else if (meta)
+        tope = posX;
     else
         tope = steps;
-    for (int j = 0; j < tope; j++)
+    long double valor;
+    for (int i = 0; i < 1000000; i++)
+        valor = pow(3.0, exponent);
+    // En el siguiente bucle movemos al jugador y si hay alguna colisión luchan, si no, el jugador se mueve
+    for (int j = 1; j <= tope; j++)
     {
         if (bajar)
         {
-            if (board[posX][posY + j] != 0)
+            if (board[posX + j][posY] != -1)
             {
                 int perdedor;
-                colision == true;
-                printf("¡Colisión entre Jugador %d y Jugador %d!\n", i + 1, board[posX][posY + j]);
-                perdedor = resuelveColision(i + 1, board[posX][posY + j], exponent);
+                colision = true;
+                printf("¡Colisión entre Jugador %d y Jugador %d!\n", numJugador, board[posX + j][posY]);
+                perdedor = resuelveColision(numJugador, board[posX + j][posY], exponent);
                 vector[perdedor]->setEstado(-1);
+                // Si gana el jugador que se está moviendo quitamos al otro jugador del tablero
+                if (perdedor != numJugador)
+                {
+                    board[posX + j][posY] = -1;
+                    if (j == tope - 1)
+                        mover = true;
+                }
+                else
+                {
+                    board[posX][posY] = -1;
+                    break;
+                }
             }
         }
         else
         {
-            if (board[posX][posY - j] != 0)
+            if (board[posX - j][posY] != -1)
             {
                 int perdedor;
-                colision == true;
-                printf("¡Colisión entre Jugador %d y Jugador %d!\n", i + 1, board[posX][posY - j]);
-                perdedor = resuelveColision(i + 1, board[posX][posY + j], exponent);
+                colision = true;
+                printf("¡Colisión entre Jugador %d y Jugador %d!\n", numJugador, board[posX - j][posY]);
+                perdedor = resuelveColision(numJugador, board[posX - j][posY], exponent);
                 vector[perdedor]->setEstado(-1);
+                if (perdedor != numJugador)
+                {
+                    board[posX - j][posY] = -1;
+                    if (j == tope - 1)
+                        mover = true;
+                }
+                else
+                {
+                    board[posX][posY] = -1;
+                    break;
+                }
             }
         }
+    }
+    // printf("\n posX %d \n", vector[numJugador]->getX());
+    // printf("num %d \n", numJugador);
+    // printf("tope %d \n", tope);
+    if (bajar)
+    {
+        if (!colision || mover)
+        {
+            vector[numJugador]->setX(posX + tope);
+            board[posX][posY] = -1;
+            board[posX + tope][posY] = numJugador;
+        }
+    }
+    else if ((!colision || mover))
+    {
+        vector[numJugador]->setX(posX - tope);
+        board[posX][posY] = -1;
+        board[posX - tope][posY] = numJugador;
     }
 }
 
@@ -139,7 +186,14 @@ void temp_main(int numPlayers, int steps, int exponent)
 
     std::vector<Jugador *> vector;
 
-    int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA] = {0};
+    int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA];
+    for (int i = 0; i < BOARD_SIZE_FILA; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE_COLUMNA; j++)
+        {
+            board[i][j] = -1;
+        }
+    }
     if (numPlayers % 2 == 0)
     {
         mitad = numPlayers / 2;
@@ -150,15 +204,24 @@ void temp_main(int numPlayers, int steps, int exponent)
         impar = true;
     }
     int cont = 0;
-    for (int i = 0; i <= BOARD_SIZE_FILA; i += BOARD_SIZE_FILA)
+    for (int i = 0; i < BOARD_SIZE_FILA; i += (BOARD_SIZE_FILA - 1))
     {
         for (int j = 0; j < mitad; j++)
         {
-            if (i != 0 && !impar && j != mitad - 1)
+            if(cont < numPlayers)
             {
-                board[i][j] = cont;
-                vector.push_back(new Jugador(cont, i, j, 0));
-                cont++;
+                if (i != 0 && !impar && j != mitad - 1)
+                {
+                    board[i][j] = cont;
+                    vector.push_back(new Jugador(cont, i, j, 0));
+                    cont++;
+                }
+                else
+                {
+                    board[i][j] = cont;
+                    vector.push_back(new Jugador(cont, i, j, 0));
+                    cont++;
+                }
             }
         }
     }
@@ -175,6 +238,7 @@ void temp_main(int numPlayers, int steps, int exponent)
         exponent = getRandomExponent();
     }
 
+    int llegadaMeta = 0;
     while (1)
     {
         for (int i = 0; i < numPlayers; i++)
@@ -188,47 +252,30 @@ void temp_main(int numPlayers, int steps, int exponent)
 
                 posX = vector[i]->getX();
                 posY = vector[i]->getY();
-                if (i <= mitad)
+                if (i < mitad)
                     bajar = true;
 
-                // Verificamos si al mover al jugador saldríamos del tablero
-                if (posY + steps >= (BOARD_SIZE_FILA - 1))
+                if ((posX == (BOARD_SIZE_FILA - 1) && bajar) || (posX == 0 && !bajar))
                 {
-                    meta = true;
-                    moverJugador(posX, posY, exponent, steps, bajar, meta, board, i, vector);
-                    if (vector[i]->getEstado() == 0)
+                    llegadaMeta++;
+                    vector[i]->setEstado(1);
+                }
+                else 
+                {
+                    if ((posX + steps >= (BOARD_SIZE_FILA - 1) && bajar) || (posX - steps <= 0 && !bajar)) // Verificamos si al mover al jugador saldríamos del tablero
                     {
-                        vector[i]->setY(BOARD_SIZE_FILA - 1);
-                        vector[i]->setEstado(1);
+                    meta = true;
                     }
-                }
-                else
-                {
                     moverJugador(posX, posY, exponent, steps, bajar, meta, board, i, vector);
-                    if (vector[i]->getEstado() == 0)
-                        vector[i]->setY(posY + steps);
                 }
-
-                // Imprimir el tablero
-                // printBoard(positions, numPlayers);
+                
+                //Imprimimos el tablero por pantalla
+                printBoard(board);
             }
         }
 
         // Verificar si todos los jugadores han llegado al final del tablero
-        int finishedPlayers = 0;
-        int livePlayers = 0;
-        for (int i = 0; i < numPlayers; i++)
-        {
-            if (vector[i]->getEstado() == -1)
-            {
-                finishedPlayers++;
-            }
-            else if (vector[i]->getEstado() == 0)
-            {
-                livePlayers++;
-            }
-        }
-        if (livePlayers == 0)
+        if (llegadaMeta == mitad)
         {
             printf("¡Los jugadores han llegado al final del tablero! Juego terminado.\n");
             break;
