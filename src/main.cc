@@ -242,8 +242,10 @@ void temp_main(int numPlayers, int steps, int exponent)
     int llegadaMeta = 0;
     while (1)
     {
+        //Nos vamos posicionando en cada uno de los jugadores para moverlos si siguen vivos.
         for (int i = 0; i < numPlayers; i++)
         {
+            //Si el jugador sigue vivo lo movemos.
             if (vector[i]->getEstado() == 0)
             {
                 int posX, posY;
@@ -256,6 +258,7 @@ void temp_main(int numPlayers, int steps, int exponent)
                 if (i < mitad)
                     bajar = true;
 
+                //Si su posición es la misma que la meta lo marcamos como que ha llegado a la meta.
                 if ((posX == (BOARD_SIZE_FILA - 1) && bajar) || (posX == 0 && !bajar))
                 {
                     llegadaMeta++;
@@ -263,7 +266,7 @@ void temp_main(int numPlayers, int steps, int exponent)
                 }
                 else 
                 {
-                    if ((posX + steps >= (BOARD_SIZE_FILA - 1) && bajar) || (posX - steps <= 0 && !bajar)) // Verificamos si al mover al jugador saldríamos del tablero
+                    if ((posX + steps >= (BOARD_SIZE_FILA - 1) && bajar) || (posX - steps <= 0 && !bajar)) // Verificamos si al mover el jugador saldríamos del tablero
                     {
                     meta = true;
                     }
