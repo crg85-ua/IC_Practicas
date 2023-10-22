@@ -23,6 +23,7 @@ int getRandomExponent()
     return rand() % 80;
 }
 
+//Imprimimos el tablero.
 void printBoard(int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA])
 {
     printf("Tablero:\n");
@@ -44,6 +45,7 @@ void printBoard(int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA])
     }
 }
 
+//Si hay una colisión entre dos jugadores, esta función decide el ganado.
 int resuelveColision(int jugador1, int jugador2, int exponent)
 {
     int perdedor;
@@ -93,6 +95,7 @@ int resuelveColision(int jugador1, int jugador2, int exponent)
     return perdedor;
 }
 
+//Movemos los jugadores
 void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool meta, int board[BOARD_SIZE_FILA][BOARD_SIZE_COLUMNA], int numJugador, std::vector<Jugador *> vector)
 {
     int tope;
@@ -158,9 +161,7 @@ void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool 
             }
         }
     }
-    // printf("\n posX %d \n", vector[numJugador]->getX());
-    // printf("num %d \n", numJugador);
-    // printf("tope %d \n", tope);
+    //Si está bajando y se mueve o no ha colisionado, movemos al jugador
     if (bajar)
     {
         if (!colision || mover)
