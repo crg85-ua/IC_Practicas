@@ -9,7 +9,7 @@
 #include <vector>
 
 #define NUM_PLAYERS_MAX 20
-#define BOARD_SIZE_FILA 50
+#define BOARD_SIZE_FILA 200
 #define BOARD_SIZE_COLUMNA 10
 #define NUM_COLU_PRINT 4
 
@@ -53,18 +53,18 @@ int resuelveColision(int jugador1, int jugador2, int exponent)
     long double valor2;
     auto start1 = std::chrono::high_resolution_clock::now(); // Momento de inicio
     for (int i = 0; i < 1000000; i++)
-        valor1 = pow(3.0, exponent);
+        valor1 = pow(50.0, exponent);
     auto stop1 = std::chrono::high_resolution_clock::now();                                 // Momento de finalización
     auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(stop1 - start1); // cambiar a miliseconds si no llega a durar 1 segundo
 
     auto start2 = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 1000000; i++)
-        valor2 = pow(3.0, exponent);
+        valor2 = pow(50.0, exponent);
     auto stop2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
 
-    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d un millón de veces.\n", jugador1, duration1.count(), exponent);
-    printf("Jugador %d tarda %lld milisegundos en resolver 3^%d un millón de veces.\n", jugador2, duration2.count(), exponent);
+    printf("Jugador %d tarda %lld milisegundos en resolver 50^%d un millón de veces.\n", jugador1, duration1.count(), exponent);
+    printf("Jugador %d tarda %lld milisegundos en resolver 50^%d un millón de veces.\n", jugador2, duration2.count(), exponent);
     if (valor1 != valor2)
         printf("Algún jugador ha dado un valor erróneo.\n");
 
@@ -111,7 +111,7 @@ void moverJugador(int posX, int posY, int exponent, int steps, bool bajar, bool 
         tope = steps;
     long double valor;
     for (int i = 0; i < 1000000; i++)
-        valor = pow(3.0, exponent);
+        valor = pow(50.0, exponent);
     // En el siguiente bucle movemos al jugador y si hay alguna colisión luchan, si no, el jugador se mueve
     for (int j = 1; j <= tope; j++)
     {
@@ -274,7 +274,7 @@ void temp_main(int numPlayers, int steps, int exponent)
                 }
                 
                 //Imprimimos el tablero por pantalla
-                printBoard(board);
+                //printBoard(board);
             }
         }
 
@@ -298,42 +298,14 @@ void temp_main(int numPlayers, int steps, int exponent)
 
 int main(int argc, char **argv)
 {
-    try
-    {
-        if (argc != 4)
-        {
-            throw std::invalid_argument("Usage: " + std::string(argv[0]) + " <num_players> <steps> <exponent>");
-        }
+    int numPlayers = 20;
+    int steps = 4;
+    int exponent = 1000;
+    auto start = std::chrono::high_resolution_clock::now();
+    temp_main(numPlayers, steps, exponent);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    printf("El programa ha tardado %lld milisegundos terminar.\n", duration.count());
 
-        int numPlayers = std::atoi(argv[1]);
-        int steps = std::atoi(argv[2]);
-        int exponent = std::atoi(argv[3]);
-
-        if (numPlayers < 1 || numPlayers > NUM_PLAYERS_MAX)
-        {
-            throw std::invalid_argument("Number of players must be between 1 and 20");
-        }
-
-        if (steps > 5)
-        {
-            throw std::invalid_argument("Number of steps must be between 1 and 5");
-        }
-        auto start = std::chrono::high_resolution_clock::now();
-        temp_main(numPlayers, steps, exponent);
-        auto stop = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-        printf("El programa ha tardado %lld milisegundos terminar.\n", duration.count());
-
-        return EXIT_SUCCESS;
-    }
-    catch (const std::invalid_argument &e)
-    {
-        std::cerr << "Invalid argument: " << e.what() << std::endl;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
-
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
