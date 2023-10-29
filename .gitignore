@@ -1,2 +1,6 @@
+# IDE config
 .vscode/
-build/
+
+# Build files
+Juego
+*.o
