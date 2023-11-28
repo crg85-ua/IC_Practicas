@@ -1,0 +1,7 @@
+/home/alumno/Desktop/Ingeniería de los Computadores/IC_Practicas/p3/unraw/build/CMakeFiles/rebuild_cache.dir
+/home/alumno/Desktop/Ingeniería de los Computadores/IC_Practicas/p3/unraw/build/CMakeFiles/edit_cache.dir
+/home/alumno/Desktop/Ingeniería de los Computadores/IC_Practicas/p3/unraw/build/CMakeFiles/unraw.dir
+/home/alumno/Desktop/Ingeniería de los Computadores/IC_Practicas/p3/unraw/build/LibRaw/CMakeFiles/rebuild_cache.dir
+/home/alumno/Desktop/Ingeniería de los Computadores/IC_Practicas/p3/unraw/build/LibRaw/CMakeFiles/edit_cache.dir
+/home/alumno/Desktop/Ingeniería de los Computadores/IC_Practicas/p3/unraw/build/LibRaw/CMakeFiles/raw_r.dir
+/home/alumno/Desktop/Ingeniería de los Computadores/IC_Practicas/p3/unraw/build/LibRaw/CMakeFiles/raw.dir

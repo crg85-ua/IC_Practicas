@@ -24,7 +24,7 @@ void gammaCorrection(cv::Mat& in, cv::Mat& out, float a, float b, float gamma);
 void sharpening(cv::Mat& in, cv::Mat& out, float sigma, float amount);
 void enhanceDetails(cv::Mat &in, cv::Mat &out, float sigma, float amoount);
 void bloom(cv::Mat &in, cv::Mat &out, float sigma, float threshold);
-void denoise(cv::Mat &in, cv::Mat &out, float sigma);
+void denoise(cv::Mat &in, cv::Mat &out, int sigma);
 void equalization(cv::Mat &in, cv::Mat &out, float black, float white, float saturation);
 void debayer(LibRaw* processor, cv::Mat &out);
 void screenMerge(cv::Mat &in1, cv::Mat &in2, cv::Mat &out);
@@ -427,31 +427,41 @@ int main(int argc, char *argv[])
         
         return 0;
     }
-    
+    auto start = high_resolution_clock::now();
     cv::Mat image;
     // debayer the raw image
     debayer(processor, image);
     delete processor;
     
-    // remove chrominance noise
-    denoise(image, image, 5);
-    // apply gamma correction (move from linear output to non linear)
-    gammaCorrection(image, image, 1.0, 0.0, 2.2);
-    // apply color balance correction
-    colorBalance(image, image, 2);
-    // equalize luminance values and increase saturation
-    equalization(image, image, 0.0, 1.0, 0.5);
     cv::Mat enhanced, bloomed;
+    std::future<void> blom = std::async (std::launch::async,bloom,std::ref(image),std::ref(bloomed),70,0.9);
+    // apply color balance correction
+    std::future<void> balance = std::async (std::launch::async,colorBalance,std::ref(image),std::ref(image),2);
+    // apply gamma correction (move from linear output to non linear)
+    std::future<void> gamma = std::async (std::launch::async,gammaCorrection,std::ref(image),std::ref(image),1.0,0.0,2.2);
+    //Esperamos a que los hilos terminen
+    balance.get();
+    gamma.get();
     // enhance high frequency details
-    enhanceDetails(image, enhanced, 20, 1.25);
-    // compute bloom mask
-    bloom(image, bloomed, 70, 0.9);
+    std::future<void> enhance = std::async (std::launch::async,enhanceDetails,std::ref(image),std::ref(enhanced),20,1.25);
+    // remove chrominance noise
+    std::future<void> denoi = std::async (std::launch::async,denoise,std::ref(image),std::ref(image),5);
+    // equalize luminance values and increase saturation
+    std::future<void> equali = std::async (std::launch::async,equalization,std::ref(image),std::ref(image),0.0,1.0,0.5);
+    //Esperamos a que los hilos terminen
+    equali.get();
+    blom.get();
+    denoi.get();
+    enhance.get();
     // combine enhanced details with bloom mask
     screenMerge(enhanced, bloomed, image);
     // convert to 8 bit image
     image.convertTo(image, CV_8U, 1.0/255.0);
     // save final image
     cv::imwrite(outputFile, image);
+    auto end = high_resolution_clock::now();
+	auto elapsed_ms = duration_cast<milliseconds>(end - start);
+    cout<<"Total: "<< elapsed_ms.count()<<"ms"<<endl;
     
     return 0;
 }
