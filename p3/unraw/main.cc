@@ -437,6 +437,8 @@ int main(int argc, char *argv[])
     std::future<void> blom = std::async (std::launch::async,bloom,std::ref(image),std::ref(bloomed),70,0.9);
     // apply color balance correction
     std::future<void> balance = std::async (std::launch::async,colorBalance,std::ref(image),std::ref(image),2);
+    // remove chrominance noise
+    std::future<void> denoi = std::async (std::launch::async,denoise,std::ref(image),std::ref(image),5);
     // apply gamma correction (move from linear output to non linear)
     std::future<void> gamma = std::async (std::launch::async,gammaCorrection,std::ref(image),std::ref(image),1.0,0.0,2.2);
     //Esperamos a que los hilos terminen
@@ -444,8 +446,7 @@ int main(int argc, char *argv[])
     gamma.get();
     // enhance high frequency details
     std::future<void> enhance = std::async (std::launch::async,enhanceDetails,std::ref(image),std::ref(enhanced),20,1.25);
-    // remove chrominance noise
-    std::future<void> denoi = std::async (std::launch::async,denoise,std::ref(image),std::ref(image),5);
+    
     // equalize luminance values and increase saturation
     std::future<void> equali = std::async (std::launch::async,equalization,std::ref(image),std::ref(image),0.0,1.0,0.5);
     //Esperamos a que los hilos terminen
