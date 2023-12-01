@@ -16,6 +16,8 @@
 
 #define SQR(x) ((x) * (x))
 
+#define CHUNKSIZE 100
+
 using namespace std;
 using namespace std::chrono;
 
@@ -302,7 +304,7 @@ void bloom(cv::Mat &in, cv::Mat &out, float sigma, float threshold)
 	cout << "Bloom: " << elapsed_ms.count()<<"ms"<<endl;
 }
 
-void gammaCorrection(cv::Mat& in, cv::Mat& out, float a, float b, float gamma)
+void gammaCorrection(cv::Mat &in, cv::Mat &out, float a, float b, float gamma)
 {
 	auto start = high_resolution_clock::now();
 	
@@ -311,17 +313,22 @@ void gammaCorrection(cv::Mat& in, cv::Mat& out, float a, float b, float gamma)
     // create the gamma LUT
     gammaCurve(curve, gamma);
     
-    unsigned short* p, *tp;
+    int i;
+
     // for each pixel, apply the computed LUT
-    for(int i = 0; i < in.rows; ++i)
+    #pragma omp parallel private(i)
     {
-        p = in.ptr<unsigned short>(i);
-        tp = tmp.ptr<unsigned short>(i);
-        for (int j = 0; j < in.cols; ++j)
+        #pragma omp for schedule(dynamic, CHUNKSIZE) nowait
+        for (i = 0; i < in.rows; ++i)
         {
-            tp[j*3] = a * curve[p[j*3]] + b;
-            tp[j*3+1] = a * curve[p[j*3+1]] + b;
-            tp[j*3+2] = a * curve[p[j*3+2]] + b;
+            unsigned short *p = in.ptr<unsigned short>(i);
+            unsigned short *tp = tmp.ptr<unsigned short>(i);
+            for (int j = 0; j < in.cols; ++j)
+            {
+                tp[j * 3] = a * curve[p[j * 3]] + b;
+                tp[j * 3 + 1] = a * curve[p[j * 3 + 1]] + b;
+                tp[j * 3 + 2] = a * curve[p[j * 3 + 2]] + b;
+            }
         }
     }
     out = tmp;
@@ -329,39 +336,46 @@ void gammaCorrection(cv::Mat& in, cv::Mat& out, float a, float b, float gamma)
     auto end = high_resolution_clock::now();
 	auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
-	cout<<"Gamma correction: "<<elapsed_ms.count()<<"ms"<<endl;
+    cout << "Gamma correction: " << elapsed_ms.count() << "ms" << endl;
 }
 
-void colorBalance(cv::Mat& in, cv::Mat& out, float percent) {
+void colorBalance(cv::Mat &in, cv::Mat &out, float percent)
+{
 
 	auto start = high_resolution_clock::now();
 
     float half_percent = percent / 200.0f;
 
     std::vector<cv::Mat> tmpsplit; 
-    cv::split(in,tmpsplit);
-    int max = (in.depth() == CV_8U ? 1<<8 : 1<<16) - 1;
-    for(int i=0;i<3;i++) 
+    cv::split(in, tmpsplit);
+    int max = (in.depth() == CV_8U ? 1 << 8 : 1 << 16) - 1;
+    int i;
+    #pragma omp parallel shared (tmpsplit) private(i)
     {
-        // find the low and high precentile values (based on the input percentile)
-        cv::Mat flat; tmpsplit[i].reshape(1,1).copyTo(flat);
-        cv::sort(flat,flat,cv::SORT_EVERY_ROW | cv::SORT_ASCENDING);
-        int lowval = flat.at<ushort>(cvFloor(((float)flat.cols) * half_percent));
-        int highval = flat.at<ushort>(cvCeil(((float)flat.cols) * (1.0 - half_percent)));
+        #pragma omp for schedule (dynamic, CHUNKSIZE) nowait
+        for (i = 0; i < 3; i++)
+        {
+            // find the low and high precentile values (based on the input percentile)
+            cv::Mat flat;
+            tmpsplit[i].reshape(1, 1).copyTo(flat);
+            cv::sort(flat, flat, cv::SORT_EVERY_ROW | cv::SORT_ASCENDING);
+            int lowval = flat.at<ushort>(cvFloor(((float)flat.cols) * half_percent));
+            int highval = flat.at<ushort>(cvCeil(((float)flat.cols) * (1.0 - half_percent)));
 
-        // saturate below the low percentile and above the high percentile
-        tmpsplit[i].setTo(lowval,tmpsplit[i] < lowval);
-        tmpsplit[i].setTo(highval,tmpsplit[i] > highval);
+            // saturate below the low percentile and above the high percentile
+            tmpsplit[i].setTo(lowval, tmpsplit[i] < lowval);
+            tmpsplit[i].setTo(highval, tmpsplit[i] > highval);
 
-        // scale the channel
-        cv::normalize(tmpsplit[i],tmpsplit[i],0,max,cv::NORM_MINMAX);
+            // scale the channel
+            cv::normalize(tmpsplit[i], tmpsplit[i], 0, max, cv::NORM_MINMAX);
+        }
     }
-    cv::merge(tmpsplit,out);
+    cv::merge(tmpsplit, out);
     
     auto end = high_resolution_clock::now();
 	auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
-	cout<<"Color balance: "<< elapsed_ms.count()<<"ms"<<endl;
+    cout << "Color balance: " << elapsed_ms.count() << "ms" << endl;
 }
 
 void screenMerge(cv::Mat &in1, cv::Mat &in2, cv::Mat &out)
@@ -370,32 +384,38 @@ void screenMerge(cv::Mat &in1, cv::Mat &in2, cv::Mat &out)
     
     cv::Mat inFloat1, inFloat2;
     // convert to float32 to avoid overflow
-    in1.convertTo(inFloat1, CV_32F, 1.0/65535);
-    in2.convertTo(inFloat2, CV_32F, 1.0/65535);
+    in1.convertTo(inFloat1, CV_32F, 1.0 / 65535);
+    in2.convertTo(inFloat2, CV_32F, 1.0 / 65535);
     cv::Mat tmp = cv::Mat::zeros(inFloat1.size(), inFloat1.type());
-    float* pIn1, *pIn2, *pTmp;
+
+    int i;
     // apply the screen mode merge
-    for(int i = 0; i < in1.rows; ++i)
+    #pragma omp parallel private(i)
     {
-        pIn1 = inFloat1.ptr<float>(i);
-        pIn2 = inFloat2.ptr<float>(i);
-        pTmp = tmp.ptr<float>(i);
-        for (int j = 0; j < in1.cols; ++j)
+        #pragma omp for schedule (dynamic, CHUNKSIZE) nowait
+        for (i = 0; i < in1.rows; ++i)
         {
-            for(int c = 0; c < 3; c++)
+            float *pIn1 = inFloat1.ptr<float>(i);
+            float *pIn2 = inFloat2.ptr<float>(i);
+            float *pTmp = tmp.ptr<float>(i);
+
+            for (int j = 0; j < in1.cols; ++j)
             {
-                float im = pIn1[j * 3 + c];
-                float m = pIn2[j * 3 + c];
-                pTmp[j * 3 + c] = 1.0 - (1.0 - m) * (1.0 - im);
+                    for (int c = 0; c < 3; c++)
+                {
+                    float im = pIn1[j * 3 + c];
+                    float m = pIn2[j * 3 + c];
+                    pTmp[j * 3 + c] = 1.0 - (1.0 - m) * (1.0 - im);
+                    }
+                }
             }
-        }
     }
     tmp.convertTo(out, CV_16U, 65535);
     
     auto end = high_resolution_clock::now();
 	auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
-	cout<<"Screen mode merge: "<< elapsed_ms.count()<<"ms"<<endl;
+    cout << "Screen mode merge: " << elapsed_ms.count() << "ms" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -434,26 +454,22 @@ int main(int argc, char *argv[])
     delete processor;
     
     cv::Mat enhanced, bloomed;
-    std::future<void> blom = std::async (std::launch::async,bloom,std::ref(image),std::ref(bloomed),70,0.9);
-    // apply color balance correction
-    std::future<void> balance = std::async (std::launch::async,colorBalance,std::ref(image),std::ref(image),2);
-    // remove chrominance noise
-    std::future<void> denoi = std::async (std::launch::async,denoise,std::ref(image),std::ref(image),5);
-    // apply gamma correction (move from linear output to non linear)
-    std::future<void> gamma = std::async (std::launch::async,gammaCorrection,std::ref(image),std::ref(image),1.0,0.0,2.2);
-    //Esperamos a que los hilos terminen
-    balance.get();
-    gamma.get();
-    // enhance high frequency details
-    std::future<void> enhance = std::async (std::launch::async,enhanceDetails,std::ref(image),std::ref(enhanced),20,1.25);
-    
+    std::future<void> blom = std::async (std::launch::async,bloom,std::ref(image), std::ref(bloomed), 70, 0.9);
     // equalize luminance values and increase saturation
     std::future<void> equali = std::async (std::launch::async,equalization,std::ref(image),std::ref(image),0.0,1.0,0.5);
+    // remove chrominance noise
+    denoise(image, image, 5);
+    // apply gamma correction (move from linear output to non linear)
+    gammaCorrection(image, image, 1.0, 0.0, 2.2);
+    // apply color balance correction
+    colorBalance(image, image, 2);
+     // enhance high frequency details
+    std::future<void> enhance = std::async (std::launch::async,enhanceDetails,std::ref(image),std::ref(enhanced),20,1.25);
+    
     //Esperamos a que los hilos terminen
     equali.get();
-    blom.get();
-    denoi.get();
     enhance.get();
+    blom.get();
     // combine enhanced details with bloom mask
     screenMerge(enhanced, bloomed, image);
     // convert to 8 bit image
