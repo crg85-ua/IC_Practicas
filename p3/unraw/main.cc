@@ -248,11 +248,11 @@ void enhanceDetails(cv::Mat &in, cv::Mat &out, float sigma, float amount)
     // for each pixel, extract the higher frequencies by substracting 
     // the blurred image and multiply it to increase details, then add
     // the blurred image again to reconstruct the image
-    float* pIn, *pBlur;
+    #pragma omp parallel for
     for(int i = 0; i < in.rows; ++i)
     {
-        pIn = inFloat.ptr<float>(i);
-        pBlur = blur.ptr<float>(i);
+        float *pIn = inFloat.ptr<float>(i);
+        float *pBlur = blur.ptr<float>(i);
         for (int j = 0; j < in.cols; ++j)
         {
             for(int c = 0;c<3;c++)

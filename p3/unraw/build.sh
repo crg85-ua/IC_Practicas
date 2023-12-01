@@ -1,7 +1,7 @@
 #!/bin/bash
 mkdir -p build
 docker build -t unraw .
-docker run -it -v ".:/root/app" unraw sh -c "\
+docker run -it --rm -v ".:/root/app" unraw sh -c "\
     cd /root/app && \
     cd build && \
     cmake .. && \
