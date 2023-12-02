@@ -21,14 +21,14 @@
 using namespace std;
 using namespace std::chrono;
 
-void colorBalance(cv::Mat& in, cv::Mat& out, float percent);
-void gammaCorrection(cv::Mat& in, cv::Mat& out, float a, float b, float gamma);
-void sharpening(cv::Mat& in, cv::Mat& out, float sigma, float amount);
+void colorBalance(cv::Mat &in, cv::Mat &out, float percent);
+void gammaCorrection(cv::Mat &in, cv::Mat &out, float a, float b, float gamma);
+void sharpening(cv::Mat &in, cv::Mat &out, float sigma, float amount);
 void enhanceDetails(cv::Mat &in, cv::Mat &out, float sigma, float amoount);
 void bloom(cv::Mat &in, cv::Mat &out, float sigma, float threshold);
 void denoise(cv::Mat &in, cv::Mat &out, int sigma);
 void equalization(cv::Mat &in, cv::Mat &out, float black, float white, float saturation);
-void debayer(LibRaw* processor, cv::Mat &out);
+void debayer(LibRaw *processor, cv::Mat &out);
 void screenMerge(cv::Mat &in1, cv::Mat &in2, cv::Mat &out);
 
 void gammaCurve(unsigned short *curve, double power)
@@ -61,102 +61,102 @@ void gammaCurve(unsigned short *curve, double power)
     }
     if (g[0])
         g[5] = 1 / (g[1] * SQR(g[3]) / 2 - g[4] * (1 - g[3]) +
-            (1 - pow(g[3], 1 + g[0])) * (1 + g[4]) / (1 + g[0])) -
-            1;
+                    (1 - pow(g[3], 1 + g[0])) * (1 + g[4]) / (1 + g[0])) -
+               1;
     else
         g[5] = 1 / (g[1] * SQR(g[3]) / 2 + 1 - g[2] - g[3] -
-            g[2] * g[3] * (log(g[3]) - 1)) -
-           1;
+                    g[2] * g[3] * (log(g[3]) - 1)) -
+               1;
     for (i = 0; i < 0x10000; i++)
     {
         curve[i] = 0xffff;
         if ((r = (double)i / imax) < 1)
         {
-          curve[i] =
-              0x10000 *
-              (mode ? (r < g[3] ? r * g[1]
-                                : (g[0] ? pow(r, g[0]) * (1 + g[4]) - g[4]
-                                        : log(r) * g[2] + 1))
-                    : (r < g[2] ? r / g[1]
-                                : (g[0] ? pow((r + g[4]) / (1 + g[4]), 1 / g[0])
-                                        : exp((r - 1) / g[2]))));
+            curve[i] =
+                0x10000 *
+                (mode ? (r < g[3] ? r * g[1]
+                                  : (g[0] ? pow(r, g[0]) * (1 + g[4]) - g[4]
+                                          : log(r) * g[2] + 1))
+                      : (r < g[2] ? r / g[1]
+                                  : (g[0] ? pow((r + g[4]) / (1 + g[4]), 1 / g[0])
+                                          : exp((r - 1) / g[2]))));
         }
     }
     auto end = high_resolution_clock::now();
     auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
-    cout<<"Gamma curve creation: "<<elapsed_ms.count()<<"ms"<<endl;
+    cout << "Gamma curve creation: " << elapsed_ms.count() << "ms" << endl;
 }
 
 void equalization(cv::Mat &in, cv::Mat &out, float black, float white, float saturation)
 {
-	auto start = high_resolution_clock::now();
-	cv::Mat hsv;
-	// convert to float32
-	in.convertTo(hsv, CV_32F, 1.0/65535.0);
-	// convert to HSV color space
-	cv::cvtColor(hsv, hsv, cv::COLOR_BGR2HSV);
-	
-	// split HSV into 3 channels
-	std::vector<cv::Mat> channels;
-	cv::split(hsv, channels);
-	// normalize values between minimum black level and maximum white level
-	cv::normalize(channels[2], channels[2], black, white, cv::NORM_MINMAX);
-	// increase saturation
-	channels[1] *= (1 + saturation);
-	// convert back to RGB and 16 bit
-	cv::merge(channels, out);
-	cv::cvtColor(out, out, cv::COLOR_HSV2BGR);
-	out.convertTo(out, CV_16U, 65535);
-	
-	auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
+    auto start = high_resolution_clock::now();
+    cv::Mat hsv;
+    // convert to float32
+    in.convertTo(hsv, CV_32F, 1.0 / 65535.0);
+    // convert to HSV color space
+    cv::cvtColor(hsv, hsv, cv::COLOR_BGR2HSV);
 
-	cout<<"Equalization: "<<elapsed_ms.count()<<"ms"<<endl;
+    // split HSV into 3 channels
+    std::vector<cv::Mat> channels;
+    cv::split(hsv, channels);
+    // normalize values between minimum black level and maximum white level
+    cv::normalize(channels[2], channels[2], black, white, cv::NORM_MINMAX);
+    // increase saturation
+    channels[1] *= (1 + saturation);
+    // convert back to RGB and 16 bit
+    cv::merge(channels, out);
+    cv::cvtColor(out, out, cv::COLOR_HSV2BGR);
+    out.convertTo(out, CV_16U, 65535);
+
+    auto end = high_resolution_clock::now();
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
+
+    cout << "Equalization: " << elapsed_ms.count() << "ms" << endl;
 }
 
 void denoise(cv::Mat &in, cv::Mat &out, int windowSize)
 {
-	auto start = high_resolution_clock::now();
-	
-	cv::Mat ycrcb;
-	// convert to float32
-	in.convertTo(ycrcb, CV_32F, 1.0/65535.0);
-	// convert to YCrCb color space
-	cv::cvtColor(ycrcb, ycrcb, cv::COLOR_BGR2YCrCb);
-	
-	// split ycrcb into 3 channels
-	std::vector<cv::Mat> channels;
-	cv::split(ycrcb, channels);
+    auto start = high_resolution_clock::now();
+
+    cv::Mat ycrcb;
+    // convert to float32
+    in.convertTo(ycrcb, CV_32F, 1.0 / 65535.0);
+    // convert to YCrCb color space
+    cv::cvtColor(ycrcb, ycrcb, cv::COLOR_BGR2YCrCb);
+
+    // split ycrcb into 3 channels
+    std::vector<cv::Mat> channels;
+    cv::split(ycrcb, channels);
 
     // remove noise from chrominance channels
-	cv::medianBlur(channels[1], channels[1], windowSize);
-	cv::medianBlur(channels[2], channels[2], windowSize);
+    cv::medianBlur(channels[1], channels[1], windowSize);
+    cv::medianBlur(channels[2], channels[2], windowSize);
 
     // convert back to RGB and 16 bits
-	cv::merge(channels, out);
-	cv::cvtColor(out, out, cv::COLOR_YCrCb2BGR);
-	out.convertTo(out, CV_16U, 65535);
-	
-	auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
+    cv::merge(channels, out);
+    cv::cvtColor(out, out, cv::COLOR_YCrCb2BGR);
+    out.convertTo(out, CV_16U, 65535);
 
-	cout<<"Denoise: "<<elapsed_ms.count()<<"ms"<<endl;
+    auto end = high_resolution_clock::now();
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
+
+    cout << "Denoise: " << elapsed_ms.count() << "ms" << endl;
 }
 
-void debayer(LibRaw* processor, cv::Mat &out)
+void debayer(LibRaw *processor, cv::Mat &out)
 {
     auto start = high_resolution_clock::now();
     processor->raw2image();
     int width = processor->imgdata.sizes.iwidth;
     int height = processor->imgdata.sizes.iheight;
     int orientation = processor->imgdata.sizes.flip;
-    
+
     // create a buffer of ushorts containing the single channel bayer pattern
     std::vector<ushort> bayerData;
-    for ( int y = 0; y < height; y++ )
+    for (int y = 0; y < height; y++)
     {
-        for ( int x = 0; x < width; x++ )
+        for (int x = 0; x < width; x++)
         {
             // get pixel idx
             int idx = y * width + x;
@@ -186,139 +186,139 @@ void debayer(LibRaw* processor, cv::Mat &out)
     // apply the debayering algorithm
     cv::cvtColor(imgBayer, imgDeBayer, cv::COLOR_BayerBG2BGR);
     out = imgDeBayer;
-    
-    switch(orientation)
-    {
-        case 2:
-            cv::flip(out, out, 0);
-            break;
-        case 3:
-            cv::rotate(out, out, cv::ROTATE_180);
-            break;
-        case 4:
-            cv::flip(out, out, 1);
-            break;
-        case 5:
-            cv::rotate(out, out, cv::ROTATE_90_COUNTERCLOCKWISE);
-            break;
-        case 6:
-            cv::rotate(out, out, cv::ROTATE_90_CLOCKWISE);
-            break;
-        case 7:
-            cv::flip(out, out, 0);
-            cv::rotate(out, out, cv::ROTATE_90_CLOCKWISE);
-            break;
-        case 8:
-            cv::flip(out, out, 0);
-            cv::rotate(out, out, cv::ROTATE_90_COUNTERCLOCKWISE);
-            break;
-    }
-    
-    auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
-	cout<<"De Bayer: "<<elapsed_ms.count()<<"ms"<<endl;
+    switch (orientation)
+    {
+    case 2:
+        cv::flip(out, out, 0);
+        break;
+    case 3:
+        cv::rotate(out, out, cv::ROTATE_180);
+        break;
+    case 4:
+        cv::flip(out, out, 1);
+        break;
+    case 5:
+        cv::rotate(out, out, cv::ROTATE_90_COUNTERCLOCKWISE);
+        break;
+    case 6:
+        cv::rotate(out, out, cv::ROTATE_90_CLOCKWISE);
+        break;
+    case 7:
+        cv::flip(out, out, 0);
+        cv::rotate(out, out, cv::ROTATE_90_CLOCKWISE);
+        break;
+    case 8:
+        cv::flip(out, out, 0);
+        cv::rotate(out, out, cv::ROTATE_90_COUNTERCLOCKWISE);
+        break;
+    }
+
+    auto end = high_resolution_clock::now();
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
+
+    cout << "De Bayer: " << elapsed_ms.count() << "ms" << endl;
 }
 
-void sharpening(cv::Mat& in, cv::Mat& out, float sigma, float amount)
+void sharpening(cv::Mat &in, cv::Mat &out, float sigma, float amount)
 {
-	auto start = high_resolution_clock::now();
-	
+    auto start = high_resolution_clock::now();
+
     cv::Mat blurry;
     // create a blurred image
     cv::GaussianBlur(in, blurry, cv::Size(), sigma);
-    out = in * (1 + amount) - blurry*amount;
-    
-    auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
+    out = in * (1 + amount) - blurry * amount;
 
-	cout << "Sharpening: " << elapsed_ms.count()<<"ms"<<endl;
+    auto end = high_resolution_clock::now();
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
+
+    cout << "Sharpening: " << elapsed_ms.count() << "ms" << endl;
 }
 
 void enhanceDetails(cv::Mat &in, cv::Mat &out, float sigma, float amount)
 {
-	auto start = high_resolution_clock::now();
-	
+    auto start = high_resolution_clock::now();
+
     cv::Mat blur, inFloat;
     // convert to float32
-    in.convertTo(inFloat, CV_32F, 1.0/65535);
+    in.convertTo(inFloat, CV_32F, 1.0 / 65535);
     // create a blurred image
     cv::GaussianBlur(inFloat, blur, cv::Size(), sigma);
 
-    // for each pixel, extract the higher frequencies by substracting 
-    // the blurred image and multiply it to increase details, then add
-    // the blurred image again to reconstruct the image
-    #pragma omp parallel for
-    for(int i = 0; i < in.rows; ++i)
+// for each pixel, extract the higher frequencies by substracting
+// the blurred image and multiply it to increase details, then add
+// the blurred image again to reconstruct the image
+#pragma omp parallel for
+    for (int i = 0; i < in.rows; ++i)
     {
         float *pIn = inFloat.ptr<float>(i);
         float *pBlur = blur.ptr<float>(i);
         for (int j = 0; j < in.cols; ++j)
         {
-            for(int c = 0;c<3;c++)
+            for (int c = 0; c < 3; c++)
             {
-                float im = pIn[j*3+c];
-                float b = pBlur[j*3+c];
+                float im = pIn[j * 3 + c];
+                float b = pBlur[j * 3 + c];
                 float d = im - b;
-                pBlur[j*3+c] = b + d*amount;
+                pBlur[j * 3 + c] = b + d * amount;
             }
         }
     }
     // convert back to 16 bit
     blur.convertTo(out, CV_16U, 65535);
-    
-    auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
-	cout << "Enhanced details: " << elapsed_ms.count()<<"ms"<<endl;
+    auto end = high_resolution_clock::now();
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
+
+    cout << "Enhanced details: " << elapsed_ms.count() << "ms" << endl;
 }
 void bloom(cv::Mat &in, cv::Mat &out, float sigma, float threshold)
 {
-	auto start = high_resolution_clock::now();
-	
+    auto start = high_resolution_clock::now();
+
     cv::Mat blur, mask, inFloat;
     // convert to float32
-    in.convertTo(inFloat, CV_32F, 1.0/65536);
+    in.convertTo(inFloat, CV_32F, 1.0 / 65536);
     cv::Mat ycrcb;
     // convert to YCrCb color space
-	cv::cvtColor(inFloat, ycrcb, cv::COLOR_BGR2YCrCb);
-	
-	// split YCrCb into 3 channels
-	cv::Mat channels[3];
-	cv::split(ycrcb, channels);
-    
+    cv::cvtColor(inFloat, ycrcb, cv::COLOR_BGR2YCrCb);
+
+    // split YCrCb into 3 channels
+    cv::Mat channels[3];
+    cv::split(ycrcb, channels);
+
     // normalize Y channel between 0 and 1
     cv::normalize(channels[0], mask, 0.0, 1.0, cv::NORM_MINMAX);
     // set to 1.0 only pixels above the threshold
     cv::threshold(mask, mask, threshold, 1.0, cv::THRESH_BINARY);
     // apply gaussian blur to thresholded pixels
     cv::GaussianBlur(mask, mask, cv::Size(), sigma);
-    
+
     // convert the computed mask to 3 channel image and 16 bit
     cv::cvtColor(mask, mask, cv::COLOR_GRAY2BGR);
     mask.convertTo(out, CV_16U, 65535);
-    
-    auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
-	cout << "Bloom: " << elapsed_ms.count()<<"ms"<<endl;
+    auto end = high_resolution_clock::now();
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
+
+    cout << "Bloom: " << elapsed_ms.count() << "ms" << endl;
 }
 
 void gammaCorrection(cv::Mat &in, cv::Mat &out, float a, float b, float gamma)
 {
-	auto start = high_resolution_clock::now();
-	
+    auto start = high_resolution_clock::now();
+
     cv::Mat tmp = cv::Mat::zeros(in.size(), in.type());
-	unsigned short curve[0x10000];
+    unsigned short curve[0x10000];
     // create the gamma LUT
     gammaCurve(curve, gamma);
-    
+
     int i;
 
-    // for each pixel, apply the computed LUT
-    #pragma omp parallel private(i)
+// for each pixel, apply the computed LUT
+#pragma omp parallel private(i)
     {
-        #pragma omp for schedule(dynamic, CHUNKSIZE) nowait
+#pragma omp for schedule(dynamic, CHUNKSIZE) nowait
         for (i = 0; i < in.rows; ++i)
         {
             unsigned short *p = in.ptr<unsigned short>(i);
@@ -332,9 +332,9 @@ void gammaCorrection(cv::Mat &in, cv::Mat &out, float a, float b, float gamma)
         }
     }
     out = tmp;
-    
+
     auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
     cout << "Gamma correction: " << elapsed_ms.count() << "ms" << endl;
 }
@@ -342,15 +342,15 @@ void gammaCorrection(cv::Mat &in, cv::Mat &out, float a, float b, float gamma)
 void colorBalance(cv::Mat &in, cv::Mat &out, float percent)
 {
 
-	auto start = high_resolution_clock::now();
+    auto start = high_resolution_clock::now();
 
     float half_percent = percent / 200.0f;
 
-    std::vector<cv::Mat> tmpsplit; 
+    std::vector<cv::Mat> tmpsplit;
     cv::split(in, tmpsplit);
     int max = (in.depth() == CV_8U ? 1 << 8 : 1 << 16) - 1;
     int i;
-    #pragma omp parallel for
+#pragma omp parallel for
     for (i = 0; i < 3; i++)
     {
         // find the low and high precentile values (based on the input percentile)
@@ -368,9 +368,9 @@ void colorBalance(cv::Mat &in, cv::Mat &out, float percent)
         cv::normalize(tmpsplit[i], tmpsplit[i], 0, max, cv::NORM_MINMAX);
     }
     cv::merge(tmpsplit, out);
-    
+
     auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
     cout << "Color balance: " << elapsed_ms.count() << "ms" << endl;
 }
@@ -378,7 +378,7 @@ void colorBalance(cv::Mat &in, cv::Mat &out, float percent)
 void screenMerge(cv::Mat &in1, cv::Mat &in2, cv::Mat &out)
 {
     auto start = high_resolution_clock::now();
-    
+
     cv::Mat inFloat1, inFloat2;
     // convert to float32 to avoid overflow
     in1.convertTo(inFloat1, CV_32F, 1.0 / 65535);
@@ -386,10 +386,10 @@ void screenMerge(cv::Mat &in1, cv::Mat &in2, cv::Mat &out)
     cv::Mat tmp = cv::Mat::zeros(inFloat1.size(), inFloat1.type());
 
     int i;
-    // apply the screen mode merge
-    #pragma omp parallel private(i)
+// apply the screen mode merge
+#pragma omp parallel private(i)
     {
-        #pragma omp for schedule (dynamic, CHUNKSIZE) nowait
+#pragma omp for schedule(dynamic, CHUNKSIZE) nowait
         for (i = 0; i < in1.rows; ++i)
         {
             float *pIn1 = inFloat1.ptr<float>(i);
@@ -398,19 +398,19 @@ void screenMerge(cv::Mat &in1, cv::Mat &in2, cv::Mat &out)
 
             for (int j = 0; j < in1.cols; ++j)
             {
-                    for (int c = 0; c < 3; c++)
+                for (int c = 0; c < 3; c++)
                 {
                     float im = pIn1[j * 3 + c];
                     float m = pIn2[j * 3 + c];
                     pTmp[j * 3 + c] = 1.0 - (1.0 - m) * (1.0 - im);
-                    }
                 }
             }
+        }
     }
     tmp.convertTo(out, CV_16U, 65535);
-    
+
     auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
 
     cout << "Screen mode merge: " << elapsed_ms.count() << "ms" << endl;
 }
@@ -420,28 +420,28 @@ int main(int argc, char *argv[])
     int ret;
     if (argc < 3)
     {
-        cerr<<"Raw file needed as first argument. Usage 'pipeline <input_file_name> <output_file_name>'."<<endl;
-        
+        cerr << "Raw file needed as first argument. Usage 'pipeline <input_file_name> <output_file_name>'." << endl;
+
         return 0;
     }
-    
+
     string inputFile = argv[1];
     string outputFile = argv[2];
-    LibRaw* processor = new LibRaw;
-    
+    LibRaw *processor = new LibRaw;
+
     // load the raw image
     if ((ret = processor->open_file(inputFile.c_str())) != LIBRAW_SUCCESS)
     {
-        cerr<<"Cannot open file "<<inputFile<<": "<<libraw_strerror(ret)<<endl;
-        
+        cerr << "Cannot open file " << inputFile << ": " << libraw_strerror(ret) << endl;
+
         return 0;
     }
-    
+
     // unpack the values
     if (ret = processor->unpack() != LIBRAW_SUCCESS)
     {
-        cerr<<"Cannot do postprocessing on "<<inputFile<<": "<<libraw_strerror(ret)<<endl;
-        
+        cerr << "Cannot do postprocessing on " << inputFile << ": " << libraw_strerror(ret) << endl;
+
         return 0;
     }
     auto start = high_resolution_clock::now();
@@ -449,33 +449,33 @@ int main(int argc, char *argv[])
     // debayer the raw image
     debayer(processor, image);
     delete processor;
-    
+
     cv::Mat enhanced, bloomed;
-    std::future<void> blom = std::async (std::launch::async,bloom,std::ref(image), std::ref(bloomed), 70, 0.9);
+    std::future<void> blom = std::async(std::launch::async, bloom, std::ref(image), std::ref(bloomed), 70, 0.9);
     // equalize luminance values and increase saturation
-    std::future<void> equali = std::async (std::launch::async,equalization,std::ref(image),std::ref(image),0.0,1.0,0.5);
+    std::future<void> equali = std::async(std::launch::async, equalization, std::ref(image), std::ref(image), 0.0, 1.0, 0.5);
     // remove chrominance noise
     denoise(image, image, 5);
     // apply gamma correction (move from linear output to non linear)
     gammaCorrection(image, image, 1.0, 0.0, 2.2);
     // apply color balance correction
     colorBalance(image, image, 2);
-     // enhance high frequency details
-    std::future<void> enhance = std::async (std::launch::async,enhanceDetails,std::ref(image),std::ref(enhanced),20,1.25);
-    
-    //Esperamos a que los hilos terminen
+    // enhance high frequency details
+    std::future<void> enhance = std::async(std::launch::async, enhanceDetails, std::ref(image), std::ref(enhanced), 20, 1.25);
+
+    // Esperamos a que los hilos terminen
     equali.get();
     enhance.get();
     blom.get();
     // combine enhanced details with bloom mask
     screenMerge(enhanced, bloomed, image);
     // convert to 8 bit image
-    image.convertTo(image, CV_8U, 1.0/255.0);
+    image.convertTo(image, CV_8U, 1.0 / 255.0);
     // save final image
     cv::imwrite(outputFile, image);
     auto end = high_resolution_clock::now();
-	auto elapsed_ms = duration_cast<milliseconds>(end - start);
-    cout<<"Total: "<< elapsed_ms.count()<<"ms"<<endl;
-    
+    auto elapsed_ms = duration_cast<milliseconds>(end - start);
+    cout << "Total: " << elapsed_ms.count() << "ms" << endl;
+
     return 0;
 }
