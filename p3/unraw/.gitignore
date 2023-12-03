@@ -4,5 +4,6 @@
 # Build files
 build/
 
+*.png
 *.jpeg
-*.bench.txt
+*.bench.txt*
